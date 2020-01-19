@@ -146,41 +146,6 @@ pc.string = function () {
         },
 
         /**
-         * @private
-         * @function
-         * @name pc.string.startsWith
-         * @description Check if a string s starts with another string subs.
-         * @param {string} s - The string to look in.
-         * @param {string} subs - The string to look for.
-         * @returns {boolean} True if s starts with subs.
-         * @deprecated
-         * @example
-         * var s = "abc";
-         * if (pc.string.startsWith(s, "a")) {
-         *     console.log('Starts with a');
-         * }
-         */
-        startsWith: function (s, subs) {
-            console.warn("WARNING: startsWith: Function is deprecated. Use String.startsWith instead.");
-            return s.startsWith(subs);
-        },
-
-        /**
-         * @private
-         * @function
-         * @name pc.string.endsWith
-         * @description Check if a string s ends with another string subs.
-         * @param {string} s - The string to look in.
-         * @param {string} subs - The string to look for.
-         * @returns {boolean} True if s ends with subs.
-         * @deprecated
-         */
-        endsWith: function (s, subs) {
-            console.warn("WARNING: endsWith: Function is deprecated. Use String.endsWith instead.");
-            return s.endsWith(subs);
-        },
-
-        /**
          * @function
          * @name pc.string.toBool
          * @description Convert a string value to a boolean. In non-strict mode (the default), 'true' is converted to true, all other values
@@ -209,7 +174,7 @@ pc.string = function () {
          * @function
          * @name pc.string.getCodePoint
          * @description Get the code point number for a character in a string. Polyfill for
-         * [<code>codePointAt</code>]{@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/codePointAt}.
+         * [`codePointAt`]{@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/codePointAt}.
          * @param {string} string - The string to get the code point from.
          * @param {number} [i] - The index in the string.
          * @returns {number} The code point value for the character in the string.
@@ -282,7 +247,7 @@ pc.string = function () {
          * @function
          * @name pc.string.fromCodePoint
          * @description Get the string for a given code point or set of code points. Polyfill for
-         * [<code>fromCodePoint</code>]{@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/fromCodePoint}.
+         * [`fromCodePoint`]{@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/fromCodePoint}.
          * @param {...number} args - The code points to convert to a string.
          * @returns {string} The converted string.
          */
