@@ -145,6 +145,12 @@ Object.assign(pc, function () {
      * @description The maximum supported texture anisotropy setting.
      */
     /**
+     * @readonly
+     * @name pc.GraphicsDevice#supportsInstancing
+     * @type {boolean}
+     * @description True if hardware instancing is supported.
+     */
+    /**
      * @event
      * @name pc.GraphicsDevice#resizecanvas
      * @description The 'resizecanvas' event is fired when the canvas is resized.
@@ -180,6 +186,7 @@ Object.assign(pc, function () {
         this._enableAutoInstancing = false;
         this.autoInstancingMaxObjects = 16384;
         this.attributesInvalidated = true;
+        this.defaultFramebuffer = null;
         this.boundBuffer = null;
         this.boundElementBuffer = null;
         this.instancedAttribs = { };
@@ -191,6 +198,9 @@ Object.assign(pc, function () {
         this._maxPixelRatio = 1;
         this.renderTarget = null;
         this.feedback = null;
+
+        // enable temporary texture unit workaround on desktop safari
+        this._tempEnableSafariTextureUnitWorkaround = !!window.safari;
 
         // local width/height without pixelRatio applied
         this._width = 0;
@@ -590,6 +600,8 @@ Object.assign(pc, function () {
         this._textureFloatHighPrecision = undefined;
 
         this.createGrabPass(options.alpha);
+
+        pc.VertexFormat.init(this);
     };
     GraphicsDevice.prototype = Object.create(pc.EventHandler.prototype);
     GraphicsDevice.prototype.constructor = GraphicsDevice;
@@ -697,6 +709,8 @@ Object.assign(pc, function () {
             this.extCompressedTextureATC = getExtension('WEBGL_compressed_texture_atc');
             this.extCompressedTextureASTC = getExtension('WEBGL_compressed_texture_astc');
             this.extParallelShaderCompile = getExtension('KHR_parallel_shader_compile');
+
+            this.supportsInstancing = !!this.extInstancing;
         },
 
         initializeCapabilities: function () {
@@ -1115,6 +1129,15 @@ Object.assign(pc, function () {
             this.boundBuffer = null;
             this.boundElementBuffer = null;
 
+            // clear texture units once a frame on desktop safari
+            if (this._tempEnableSafariTextureUnitWorkaround) {
+                for (var unit = 0; unit < this.textureUnits.length; ++unit) {
+                    for (var slot = 0; slot < 3; ++slot) {
+                        this.textureUnits[unit][slot] = null;
+                    }
+                }
+            }
+
             // Set the render target
             var target = this.renderTarget;
             if (target) {
@@ -1247,7 +1270,7 @@ Object.assign(pc, function () {
                     this.setFramebuffer(target._glFrameBuffer);
                 }
             } else {
-                this.setFramebuffer(null);
+                this.setFramebuffer(this.defaultFramebuffer);
             }
         },
 
@@ -1904,7 +1927,7 @@ Object.assign(pc, function () {
                 // Ensure the texture is currently bound to the correct target on the specified texture unit.
                 // If the texture is already bound to the correct target on the specified unit, there's no need
                 // to actually make the specified texture unit active because the texture itself does not need
-                // to be udpated.
+                // to be updated.
                 this.bindTextureOnUnit(texture, textureUnit);
             }
         },
@@ -1950,7 +1973,7 @@ Object.assign(pc, function () {
                             element.offset + vbOffset
                         );
 
-                        if (element.stream === 1 && numInstances > 1) {
+                        if (element.stream === 1 && numInstances > 0) {
                             if (!this.instancedAttribs[locationId]) {
                                 gl.vertexAttribDivisor(locationId, 1);
                                 this.instancedAttribs[locationId] = true;
@@ -2009,7 +2032,7 @@ Object.assign(pc, function () {
             var samplers = shader.samplers;
             var uniforms = shader.uniforms;
 
-            if (numInstances > 1) {
+            if (numInstances > 0) {
                 this.boundBuffer = null;
                 this.attributesInvalidated = true;
             }
@@ -2095,7 +2118,7 @@ Object.assign(pc, function () {
                 var format = indexBuffer.glFormat;
                 var offset = primitive.base * indexBuffer.bytesPerIndex;
 
-                if (numInstances > 1) {
+                if (numInstances > 0) {
                     gl.drawElementsInstanced(mode, count, format, offset, numInstances);
                 } else {
                     gl.drawElements(mode, count, format, offset);
@@ -2103,7 +2126,7 @@ Object.assign(pc, function () {
             } else {
                 var first = primitive.base;
 
-                if (numInstances > 1) {
+                if (numInstances > 0) {
                     gl.drawArraysInstanced(mode, first, count, numInstances);
                 } else {
                     gl.drawArrays(mode, first, count);

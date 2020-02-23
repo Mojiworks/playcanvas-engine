@@ -257,9 +257,9 @@ Object.assign(pc, (function () {
         /**
          * @function
          * @name pc.Vec4#normalize
-         * @description Returns the specified 4-dimensional vector copied and converted to a unit vector.
+         * @description Returns this 4-dimensional vector converted to a unit vector in place.
          * If the vector has a length of zero, the vector's elements will be set to zero.
-         * @returns {pc.Vec4} The result of the normalization.
+         * @returns {pc.Vec4} Self for chaining.
          * @example
          * var v = new pc.Vec4(25, 0, 0, 0);
          *
@@ -464,14 +464,6 @@ Object.assign(pc, (function () {
      * @type {pc.Vec4}
      * @description A constant vector set to [1, 1, 1, 1].
      */
-    Object.defineProperty(Vec4, 'ONE', {
-        get: (function () {
-            var one = new Vec4(1, 1, 1, 1);
-            return function () {
-                return one;
-            };
-        }())
-    });
 
     /**
      * @field
@@ -481,13 +473,10 @@ Object.assign(pc, (function () {
      * @type {pc.Vec4}
      * @description A constant vector set to [0, 0, 0, 0].
      */
-    Object.defineProperty(Vec4, 'ZERO', {
-        get: (function () {
-            var zero = new Vec4(0, 0, 0, 0);
-            return function () {
-                return zero;
-            };
-        }())
+
+    Object.defineProperties(Vec4, {
+        ZERO: { value: new Vec4(0, 0, 0, 0) },
+        ONE: { value: new Vec4(1, 1, 1, 1) }
     });
 
     return {
