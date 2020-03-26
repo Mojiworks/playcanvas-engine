@@ -14,6 +14,7 @@ var categories = [
     }, {
         name: "graphics",
         examples: [
+            "batching-dynamic",
             "hardware-instancing",
             "layers",
             "lights",
@@ -26,15 +27,16 @@ var categories = [
             "model-textured-box",
             "point-cloud",
             "portal",
+            "particles-anim-index",
+            "particles-random-sprites",
             "particles-snow",
             "particles-sparks",
-            "particles-start-frame",
             "post-effects",
+            "render-to-texture",
             "shader-burn",
             "shader-toon",
             "shader-wobble",
-            "texture-basis",
-            "virtual-reality"
+            "texture-basis"
         ]
     }, {
         name: "input",
@@ -76,11 +78,12 @@ var categories = [
     }, {
         name: "xr",
         examples: [
-            'augmented-reality-basic',
-            'virtual-reality-basic',
-            'xr-picking',
+            'ar-basic',
+            'ar-hit-test',
+            'vr-basic',
             'vr-controllers',
-            'vr-movement'
+            'vr-movement',
+            'xr-picking'
         ]
     }
 ];
