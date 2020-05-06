@@ -298,9 +298,6 @@ Object.assign(pc, function () {
                         new pc.Vec3(normal.x(), normal.y(), normal.z())
                     );
 
-                    Ammo.destroy(point);
-                    Ammo.destroy(normal);
-
                     // keeping for backwards compatibility
                     if (arguments.length > 2) {
                         var callback = arguments[2];
@@ -317,6 +314,56 @@ Object.assign(pc, function () {
             Ammo.destroy(rayCallback);
 
             return result;
+        },
+
+        /**
+         * @function
+         * @name pc.RigidBodyComponentSystem#raycastAll
+         * @description Raycast the world and return all entities the ray hits. It returns an array
+         * of {@link pc.RaycastResult}, one for each hit. If no hits are detected, the returned
+         * array will be of length 0.
+         * @param {pc.Vec3} start - The world space point where the ray starts.
+         * @param {pc.Vec3} end - The world space point where the ray ends.
+         * @returns {pc.RaycastResult[]} An array of raycast hit results (0 length if there were no hits).
+         */
+        raycastAll: function (start, end) {
+            // #ifdef DEBUG
+            if (!Ammo.AllHitsRayResultCallback) {
+                console.error("pc.RigidBodyComponentSystem#raycastAll: Your version of ammo.js does not expose Ammo.AllHitsRayResultCallback. Update it to latest.");
+            }
+            // #endif
+
+            var results = [];
+
+            ammoRayStart.setValue(start.x, start.y, start.z);
+            ammoRayEnd.setValue(end.x, end.y, end.z);
+            var rayCallback = new Ammo.AllHitsRayResultCallback(ammoRayStart, ammoRayEnd);
+
+            this.dynamicsWorld.rayTest(ammoRayStart, ammoRayEnd, rayCallback);
+            if (rayCallback.hasHit()) {
+                var collisionObjs = rayCallback.get_m_collisionObjects();
+                var points = rayCallback.get_m_hitPointWorld();
+                var normals = rayCallback.get_m_hitNormalWorld();
+
+                var numHits = collisionObjs.size();
+                for (var i = 0; i < numHits; i++) {
+                    var body = Ammo.castObject(collisionObjs.at(i), Ammo.btRigidBody);
+                    if (body) {
+                        var point = points.at(i);
+                        var normal = normals.at(i);
+                        var result = new RaycastResult(
+                            body.entity,
+                            new pc.Vec3(point.x(), point.y(), point.z()),
+                            new pc.Vec3(normal.x(), normal.y(), normal.z())
+                        );
+                        results.push(result);
+                    }
+                }
+            }
+
+            Ammo.destroy(rayCallback);
+
+            return results;
         },
 
         /**

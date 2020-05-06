@@ -125,11 +125,10 @@ Object.assign(pc, function () {
         this.hitTest = new pc.XrHitTest(this);
 
         this._camera = null;
-        this._pose = null;
         this.views = [];
         this.viewsPool = [];
-        this.position = new pc.Vec3();
-        this.rotation = new pc.Quat();
+        this._localPosition = new pc.Vec3();
+        this._localRotation = new pc.Quat();
 
         this._depthNear = 0.1;
         this._depthFar = 1000;
@@ -356,7 +355,6 @@ Object.assign(pc, function () {
         var onEnd = function () {
             self._session = null;
             self._referenceSpace = null;
-            self._pose = null;
             self.views = [];
             self._width = 0;
             self._height = 0;
@@ -374,11 +372,11 @@ Object.assign(pc, function () {
             session.removeEventListener('end', onEnd);
             session.removeEventListener('visibilitychange', onVisibilityChange);
 
+            if (! failed) self.fire('end');
+
             // old requestAnimationFrame will never be triggered,
             // so queue up new tick
             self.app.tick();
-
-            if (! failed) self.fire('end');
         };
 
         session.addEventListener('end', onEnd);
@@ -446,8 +444,8 @@ Object.assign(pc, function () {
             this.app.graphicsDevice.setResolution(width, height);
         }
 
-        this._pose = frame.getViewerPose(this._referenceSpace);
-        lengthNew = this._pose ? this._pose.views.length : 0;
+        var pose = frame.getViewerPose(this._referenceSpace);
+        lengthNew = pose ? pose.views.length : 0;
 
         if (lengthNew > this.views.length) {
             // add new views into list
@@ -477,18 +475,18 @@ Object.assign(pc, function () {
             }
         }
 
-        if (this._pose) {
+        if (pose) {
             // reset position
-            var posePosition = this._pose.transform.position;
-            var poseOrientation = this._pose.transform.orientation;
-            this.position.set(posePosition.x, posePosition.y, posePosition.z);
-            this.rotation.set(poseOrientation.x, poseOrientation.y, poseOrientation.z, poseOrientation.w);
+            var posePosition = pose.transform.position;
+            var poseOrientation = pose.transform.orientation;
+            this._localPosition.set(posePosition.x, posePosition.y, posePosition.z);
+            this._localRotation.set(poseOrientation.x, poseOrientation.y, poseOrientation.z, poseOrientation.w);
 
             layer = frame.session.renderState.baseLayer;
 
-            for (i = 0; i < this._pose.views.length; i++) {
+            for (i = 0; i < pose.views.length; i++) {
                 // for each view, calculate matrices
-                viewRaw = this._pose.views[i];
+                viewRaw = pose.views[i];
                 view = this.views[i];
                 viewport = layer.getViewport(viewRaw);
 
@@ -504,13 +502,15 @@ Object.assign(pc, function () {
         }
 
         // position and rotate camera based on calculated vectors
-        this._camera.camera._node.setLocalPosition(this.position);
-        this._camera.camera._node.setLocalRotation(this.rotation);
+        this._camera.camera._node.setLocalPosition(this._localPosition);
+        this._camera.camera._node.setLocalRotation(this._localRotation);
 
         this.input.update(frame);
 
         if (this._type === pc.XRTYPE_AR && this.hitTest.supported)
             this.hitTest.update(frame);
+
+        this.fire('update');
     };
 
     Object.defineProperty(XrManager.prototype, 'supported', {
