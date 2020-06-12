@@ -1,4 +1,5 @@
 Object.assign(pc, function () {
+
     /**
      * @class
      * @name pc.Application
@@ -580,6 +581,8 @@ Object.assign(pc, function () {
         }
 
         this.loader.addHandler("animation", new pc.AnimationHandler());
+        this.loader.addHandler("animclip", new pc.AnimClipHandler());
+        this.loader.addHandler("animstategraph", new pc.AnimStateGraphHandler());
         this.loader.addHandler("model", new pc.ModelHandler(this.graphicsDevice, this.scene.defaultMaterial));
         this.loader.addHandler("material", new pc.MaterialHandler(this));
         this.loader.addHandler("texture", new pc.TextureHandler(this.graphicsDevice, this.assets, this.loader));
@@ -606,6 +609,7 @@ Object.assign(pc, function () {
         this.systems.add(new pc.RigidBodyComponentSystem(this));
         this.systems.add(new pc.CollisionComponentSystem(this));
         this.systems.add(new pc.AnimationComponentSystem(this));
+        this.systems.add(new pc.AnimComponentSystem(this));
         this.systems.add(new pc.ModelComponentSystem(this));
         this.systems.add(new pc.CameraComponentSystem(this));
         this.systems.add(new pc.LightComponentSystem(this));
@@ -1256,6 +1260,7 @@ Object.assign(pc, function () {
                 pc.ComponentSystem.fixedUpdate(1.0 / 60.0, this._inTools);
 
             pc.ComponentSystem.update(dt, this._inTools);
+            pc.ComponentSystem.animationUpdate(dt, this._inTools);
             pc.ComponentSystem.postUpdate(dt, this._inTools);
 
             // fire update event
@@ -1513,7 +1518,6 @@ Object.assign(pc, function () {
         onLibrariesLoaded: function () {
             this._librariesLoaded = true;
             this.systems.rigidbody.onLibraryLoaded();
-            this.systems.collision.onLibraryLoaded();
         },
 
         /**
@@ -1920,6 +1924,8 @@ Object.assign(pc, function () {
             app._fillFrameStats(now, dt, ms);
             // #endif
 
+            app.fire("frameupdate", ms);
+
             if (frame) {
                 app.xr.update(frame);
                 app.graphicsDevice.defaultFramebuffer = frame.session.renderState.baseLayer.framebuffer;
@@ -1928,6 +1934,8 @@ Object.assign(pc, function () {
             }
 
             app.update(dt);
+
+            app.fire("framerender");
 
             if (app.autoRender || app.renderNextFrame) {
                 app.render();

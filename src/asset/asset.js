@@ -18,6 +18,9 @@ Object.assign(pc, function () {
 
             // Data URL (RFC 2397), simplified
             'data:' +
+
+            // Blob data
+            '|blob:' +
         ')',
         'i' // non case-sensitive flag
     );
@@ -58,6 +61,7 @@ Object.assign(pc, function () {
      * var asset = new pc.Asset("a texture", "texture", {
      *     url: "http://example.com/my/assets/here/texture.png"
      * });
+     * @param {object} [options] - a JSON object containing load-time options specific to the asset.
      * @property {string} name The name of the asset
      * @property {number} id The asset id
      * @property {string} type The type of the asset. One of ["animation", "audio", "binary", "cubemap", "css", "font", "json", "html", "material", "model", "script", "shader", "text", "texture"]
@@ -67,7 +71,7 @@ Object.assign(pc, function () {
      * @property {string} [file.filename] The filename of the resource file
      * @property {number} [file.size] The size of the resource file
      * @property {string} [file.hash] The MD5 hash of the resource file data and the Asset data field
-     * @property {object} data JSON data that contains either the complete resource data (e.g. in the case of a material) or additional data (e.g. in the case of a model it contains mappings from mesh to material)
+     * @property {object} [data] Optional JSON data that contains either the complete resource data (e.g. in the case of a material) or additional data (e.g. in the case of a model it contains mappings from mesh to material)
      * @property {object} resource A reference to the resource when the asset is loaded. e.g. a {@link pc.Texture} or a {@link pc.Model}
      * @property {Array} resources A reference to the resources of the asset when it's loaded. An asset can hold more runtime resources than one e.g. cubemaps
      * @property {boolean} preload If true the asset will be loaded during the preload phase of application set up.
@@ -75,7 +79,7 @@ Object.assign(pc, function () {
      * @property {boolean} loading True if the resource is currently being loaded
      * @property {pc.AssetRegistry} registry The asset registry that this Asset belongs to
      */
-    var Asset = function (name, type, file, data) {
+    var Asset = function (name, type, file, data, options) {
         pc.EventHandler.call(this);
 
         this._id = assetIdCounter--;
@@ -89,6 +93,7 @@ Object.assign(pc, function () {
 
         this._file = null;
         this._data = data || { };
+        this.options = options || { };
 
         // This is where the loaded resource(s) will be
         this._resources = [];
@@ -226,6 +231,19 @@ Object.assign(pc, function () {
         /**
          * @private
          * @function
+         * @name pcAsset#getAbsoluteUrl
+         * @description Construct an asset URL from this asset's location and a relative path
+         * @param {string} relativePath - The relative path to be concatenated to this asset's base url
+         * @returns {string} Resulting URL of the asset
+         */
+        getAbsoluteUrl: function (relativePath) {
+            var base = pc.path.getDirectory(this.file.url);
+            return pc.path.join(base, relativePath);
+        },
+
+        /**
+         * @private
+         * @function
          * @name pc.Asset#getLocalizedAssetId
          * @param {string} locale - The desired locale e.g. Ar-AR.
          * @description Returns the asset id of the asset that corresponds to the specified locale.
@@ -314,16 +332,20 @@ Object.assign(pc, function () {
          * // asset.resource is null
          */
         unload: function () {
-            if (!this.loaded && !this.resource)
+            if (!this.loaded && this._resources.length === 0)
                 return;
 
             this.fire('unload', this);
             this.registry.fire('unload:' + this.id, this);
 
-            if (this.resource && this.resource.destroy)
-                this.resource.destroy();
+            for (var i = 0; i < this._resources.length; ++i) {
+                var resource = this._resources[i];
+                if (resource && resource.destroy) {
+                    resource.destroy();
+                }
+            }
 
-            this.resource = null;
+            this.resources = [];
             this.loaded = false;
 
             if (this.file) {
@@ -552,6 +574,13 @@ Object.assign(pc, function () {
          * @description Asset type name for script.
          */
         ASSET_SCRIPT: 'script',
+        /**
+         * @constant
+         * @type {string}
+         * @name pc.ASSET_CONTAINER
+         * @description Asset type name for a container.
+         */
+        ASSET_CONTAINER: 'container',
 
         ABSOLUTE_URL: ABSOLUTE_URL
     };
