@@ -400,7 +400,7 @@ Object.assign(SoundComponent.prototype, {
      * @name pc.SoundComponent#stop
      * @description Stops playback of the sound slot with the specified name if it's paused. If no
      * name is specified all slots will be stopped.
-     * @param {string} [name] - The name of the slot to stop. Leave undefined to stop everything.
+     * @param {string|undefined} [name] - The name of the slot to stop. Leave undefined to stop everything.
      * @example
      * // stop all sounds
      * this.entity.sound.stop();
