@@ -17,7 +17,7 @@ then
 fi
 
 echo -e ${GREEN}
-echo Documents have been written to: ./docs
-echo Playcanvas bindings have been written to: ./build/output/playcanvas.d.ts
-echo You should copy bindings to your project, e.g. 'cp ./build/output/playcanvas.d.ts ~/dev/mygame/src/shims'
+echo Documents have been written to: docs
+echo Playcanvas bindings have been written to: build/playcanvas.d.ts
+echo You should copy bindings to your project to replace the playcanvas.d.ts file
 echo -e ${NORMAL}
